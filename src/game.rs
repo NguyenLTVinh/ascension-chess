@@ -19,6 +19,7 @@ pub struct Game {
     pub phase: TurnPhase,
     pub winner: Option<PlayerColor>,
     pub history: Vec<Board>,
+    pub last_move: Option<(Pos, Pos)>,
 }
 
 impl Game {
@@ -33,6 +34,7 @@ impl Game {
             phase: TurnPhase::Normal,
             winner: None,
             history: Vec::new(),
+            last_move: None,
         }
     }
 
@@ -86,6 +88,7 @@ impl Game {
     }
 
     pub fn make_move(&mut self, from: Pos, to: Pos) {
+        self.last_move = Some((from, to));
         let piece = self.board.get_piece(from).unwrap();
         let target = self.board.get_piece(to);
 

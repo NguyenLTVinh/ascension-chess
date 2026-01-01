@@ -423,7 +423,7 @@ impl Board {
         }
     }
 
-    fn find_king(&self, color: PlayerColor) -> Option<Pos> {
+    pub fn find_king(&self, color: PlayerColor) -> Option<Pos> {
         for x in 0..8 {
             for y in 0..8 {
                 let pos = Pos::new(x, y);

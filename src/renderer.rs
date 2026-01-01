@@ -18,6 +18,20 @@ pub fn draw_game(game: &Game, assets: &Assets) {
         },
     );
 
+    if let Some((from, to)) = game.last_move {
+        let (fx, fy) = get_screen_coords(from);
+        draw_rectangle(fx, fy, SQUARE_SIZE, SQUARE_SIZE, LAST_MOVE_COLOR);
+        let (tx, ty) = get_screen_coords(to);
+        draw_rectangle(tx, ty, SQUARE_SIZE, SQUARE_SIZE, LAST_MOVE_COLOR);
+    }
+
+    if game.board.is_in_check(game.turn) {
+        if let Some(king_pos) = game.board.find_king(game.turn) {
+            let (kx, ky) = get_screen_coords(king_pos);
+            draw_rectangle(kx, ky, SQUARE_SIZE, SQUARE_SIZE, CHECK_COLOR);
+        }
+    }
+
     if let Some(pos) = game.selected_pos {
         let (sx, sy) = get_screen_coords(pos);
         draw_rectangle(sx, sy, SQUARE_SIZE, SQUARE_SIZE, SELECTION_COLOR);

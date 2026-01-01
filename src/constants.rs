@@ -22,6 +22,8 @@ pub const VAL_ARCHBISHOP: i32 = 10;
 pub const VAL_CANNON: i32 = 13;
 pub const VAL_MONARCH: i32 = 21;
 
-pub const SELECTION_COLOR: Color = Color::new(0.0, 1.0, 0.0, 0.5);
-pub const MOVE_HINT_COLOR: Color = Color::new(0.0, 1.0, 0.0, 0.5);
-pub const CAPTURE_HINT_COLOR: Color = Color::new(0.0, 1.0, 0.0, 0.5);
+pub const SELECTION_COLOR: Color = Color::new(0.0, 0.5, 0.0, 0.6);
+pub const MOVE_HINT_COLOR: Color = Color::new(0.0, 0.5, 0.0, 0.6);
+pub const CAPTURE_HINT_COLOR: Color = Color::new(0.0, 0.5, 0.0, 0.6);
+pub const LAST_MOVE_COLOR: Color = Color::new(0.8, 0.9, 0.0, 0.5);
+pub const CHECK_COLOR: Color = Color::new(1.0, 0.0, 0.0, 0.6);
