@@ -152,13 +152,27 @@ fn draw_ui(game: &Game) {
         }
     }
 
-    if let Some(winner) = game.winner {
-        draw_text(
-            &format!("WINNER: {:?}", winner),
-            ui_x,
-            ui_y + 50.0,
-            40.0,
-            RED,
-        );
+    if let Some(result) = &game.result {
+        match result {
+            GameResult::Win(winner) => {
+                draw_text(
+                    &format!("WINNER: {:?}", winner),
+                    ui_x,
+                    ui_y + 50.0,
+                    40.0,
+                    RED,
+                );
+            }
+            GameResult::Draw(reason) => {
+                draw_text("DRAW", ui_x, ui_y + 50.0, 40.0, RED);
+                let reason_text = match reason {
+                    DrawReason::Stalemate => "Stalemate",
+                    DrawReason::ThreeFoldRepetition => "3-Fold Repetition",
+                    DrawReason::InsufficientMaterial => "Insufficient Material",
+                    DrawReason::FiftyMoveRule => "50 Move Rule",
+                };
+                draw_text(reason_text, ui_x, ui_y + 90.0, 30.0, RED);
+            }
+        }
     }
 }

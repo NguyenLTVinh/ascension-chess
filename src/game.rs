@@ -9,6 +9,20 @@ pub enum TurnPhase {
     GameOver,
 }
 
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum DrawReason {
+    Stalemate,
+    ThreeFoldRepetition,
+    InsufficientMaterial,
+    FiftyMoveRule,
+}
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum GameResult {
+    Win(PlayerColor),
+    Draw(DrawReason),
+}
+
 pub struct Game {
     pub board: Board,
     pub turn: PlayerColor,
@@ -17,24 +31,30 @@ pub struct Game {
     pub selected_pos: Option<Pos>,
     pub legal_moves: Vec<Pos>,
     pub phase: TurnPhase,
-    pub winner: Option<PlayerColor>,
+    pub result: Option<GameResult>,
     pub history: Vec<Board>,
     pub last_move: Option<(Pos, Pos)>,
+    pub half_move_clock: u32,
 }
 
 impl Game {
     pub fn new() -> Self {
+        let board = Board::new();
+        let mut history = Vec::new();
+        history.push(board.clone());
+
         Self {
-            board: Board::new(),
+            board,
             turn: PlayerColor::White,
             white_points: 0,
             black_points: 0,
             selected_pos: None,
             legal_moves: Vec::new(),
             phase: TurnPhase::Normal,
-            winner: None,
-            history: Vec::new(),
+            result: None,
+            history,
             last_move: None,
+            half_move_clock: 0,
         }
     }
 
@@ -88,15 +108,22 @@ impl Game {
     }
 
     pub fn make_move(&mut self, from: Pos, to: Pos) {
-        self.last_move = Some((from, to));
         let piece = self.board.get_piece(from).unwrap();
         let target = self.board.get_piece(to);
+
+        if piece.piece_type == PieceType::Pawn || target.is_some() {
+            self.half_move_clock = 0;
+        } else {
+            self.half_move_clock += 1;
+        }
+
+        self.last_move = Some((from, to));
 
         let mut points_gained = 0;
         if let Some(captured) = target {
             points_gained += captured.value();
             if captured.piece_type == PieceType::King {
-                self.winner = Some(self.turn);
+                self.result = Some(GameResult::Win(self.turn));
                 self.phase = TurnPhase::GameOver;
                 self.board.set_piece(to, Some(piece));
                 self.board.set_piece(from, None);
@@ -189,32 +216,63 @@ impl Game {
     }
 
     fn end_turn_process(&mut self) {
+        self.history.push(self.board.clone());
         self.turn = self.turn.opposite();
         self.phase = TurnPhase::Normal;
         self.start_turn();
 
-        if self.board.is_in_check(self.turn) {
-            let mut can_move = false;
-            for x in 0..8 {
-                for y in 0..8 {
-                    let pos = Pos::new(x, y);
-                    if let Some(p) = self.board.get_piece(pos) {
-                        if p.color == self.turn {
-                            if !self.board.get_legal_moves(pos).is_empty() {
-                                can_move = true;
-                                break;
-                            }
+        if self.half_move_clock >= 100 {
+            self.result = Some(GameResult::Draw(DrawReason::FiftyMoveRule));
+            self.phase = TurnPhase::GameOver;
+            return;
+        }
+
+        if self
+            .board
+            .has_insufficient_material(self.white_points, self.black_points)
+        {
+            self.result = Some(GameResult::Draw(DrawReason::InsufficientMaterial));
+            self.phase = TurnPhase::GameOver;
+            return;
+        }
+
+        let mut repetition_count = 0;
+        for board in &self.history {
+            if *board == self.board {
+                repetition_count += 1;
+            }
+        }
+        if repetition_count >= 3 {
+            self.result = Some(GameResult::Draw(DrawReason::ThreeFoldRepetition));
+            self.phase = TurnPhase::GameOver;
+            return;
+        }
+
+        let mut can_move = false;
+        for x in 0..8 {
+            for y in 0..8 {
+                let pos = Pos::new(x, y);
+                if let Some(p) = self.board.get_piece(pos) {
+                    if p.color == self.turn {
+                        if !self.board.get_legal_moves(pos).is_empty() {
+                            can_move = true;
+                            break;
                         }
                     }
                 }
-                if can_move {
-                    break;
-                }
             }
-            if !can_move {
-                self.winner = Some(self.turn.opposite());
-                self.phase = TurnPhase::GameOver;
+            if can_move {
+                break;
             }
+        }
+
+        if !can_move {
+            if self.board.is_in_check(self.turn) {
+                self.result = Some(GameResult::Win(self.turn.opposite()));
+            } else {
+                self.result = Some(GameResult::Draw(DrawReason::Stalemate));
+            }
+            self.phase = TurnPhase::GameOver;
         }
     }
 

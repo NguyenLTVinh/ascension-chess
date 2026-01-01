@@ -2,7 +2,7 @@ use crate::constants::*;
 use crate::piece::*;
 use crate::types::*;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Board {
     pub squares: [[Option<Piece>; BOARD_SIZE]; BOARD_SIZE],
     pub en_passant_target: Option<Pos>,
@@ -451,6 +451,65 @@ impl Board {
             }
         }
         false
+    }
+
+    pub fn has_insufficient_material(&self, white_points: i32, black_points: i32) -> bool {
+        let mut white_pieces = Vec::new();
+        let mut black_pieces = Vec::new();
+
+        for x in 0..8 {
+            for y in 0..8 {
+                if let Some(p) = self.get_piece(Pos::new(x, y)) {
+                    if p.color == PlayerColor::White {
+                        white_pieces.push(p);
+                    } else {
+                        black_pieces.push(p);
+                    }
+                }
+            }
+        }
+
+        !self.has_winning_potential(&white_pieces, white_points)
+            && !self.has_winning_potential(&black_pieces, black_points)
+    }
+
+    fn has_winning_potential(&self, pieces: &[Piece], points: i32) -> bool {
+        let mut bishops = 0;
+        let mut knights = 0;
+
+        for p in pieces {
+            match p.piece_type {
+                PieceType::Pawn
+                | PieceType::Rook
+                | PieceType::Queen
+                | PieceType::Hawk
+                | PieceType::Elephant
+                | PieceType::Archbishop
+                | PieceType::Cannon
+                | PieceType::Monarch => return true,
+                PieceType::Bishop => bishops += 1,
+                PieceType::Knight => knights += 1,
+                PieceType::King => {}
+            }
+        }
+
+        if bishops == 0 && knights == 0 {
+            return false;
+        }
+
+        if bishops == 1 && knights == 0 {
+            return points >= 7;
+        }
+
+        if bishops == 0 && knights == 1 {
+            return points >= 7;
+        }
+
+        if bishops == 0 && knights == 2 {
+            return points >= 7;
+        }
+
+        true
     }
 
     pub fn can_piece_attack(&self, attacker_pos: Pos, target_pos: Pos) -> bool {
