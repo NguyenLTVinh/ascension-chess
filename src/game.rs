@@ -198,7 +198,7 @@ impl Game {
     }
 
     pub fn resolve_promotion(&mut self, new_type: PieceType) {
-        if let TurnPhase::Promoting(pos, is_hawk) = self.phase {
+        if let TurnPhase::Promoting(pos, _is_hawk) = self.phase {
             if let Some(mut piece) = self.board.get_piece(pos) {
                 piece.piece_type = new_type;
                 self.board.set_piece(pos, Some(piece));

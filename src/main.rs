@@ -97,6 +97,9 @@ async fn main() {
     }
 
     loop {
+        let board_offset_x = (screen_width() - SQUARE_SIZE * 8.0) / 2.0;
+        let board_offset_y = (screen_height() - SQUARE_SIZE * 8.0) / 2.0;
+
         while let Ok(msg) = game_rx.try_recv() {
             match msg {
                 GameMessage::Welcome { color } => {
@@ -135,8 +138,8 @@ async fn main() {
         if is_mouse_button_pressed(MouseButton::Left) && can_play {
             let (mx, my) = mouse_position();
 
-            let visual_x = ((mx - BOARD_OFFSET_X) / SQUARE_SIZE).floor() as i32;
-            let visual_y = ((my - BOARD_OFFSET_Y) / SQUARE_SIZE).floor() as i32;
+            let visual_x = ((mx - board_offset_x) / SQUARE_SIZE).floor() as i32;
+            let visual_y = ((my - board_offset_y) / SQUARE_SIZE).floor() as i32;
 
             let bx = if flipped { 7 - visual_x } else { visual_x };
             let by = if flipped { visual_y } else { 7 - visual_y };
@@ -212,7 +215,7 @@ async fn main() {
             }
         }
 
-        renderer::draw_game(&game, &assets, flipped);
+        renderer::draw_game(&game, &assets, flipped, board_offset_x, board_offset_y);
 
         next_frame().await
     }
