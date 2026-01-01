@@ -19,6 +19,9 @@ struct Args {
     #[arg(short, long)]
     password: Option<String>,
 
+    #[arg(short, long)]
+    create: bool,
+
     #[arg(long, default_value = "127.0.0.1:8080")]
     server: String,
 }
@@ -39,9 +42,10 @@ async fn main() {
     let (game_tx, game_rx) = mpsc::channel::<GameMessage>();
     let (net_tx, mut net_rx_tokio) = tokio::sync::mpsc::unbounded_channel::<GameMessage>();
 
-    if let Some(password) = args.password {
+    if args.password.is_some() || args.create {
         is_online = true;
         let server_addr = args.server.clone();
+        let password = args.password.clone();
 
         thread::spawn(move || {
             let rt = Runtime::new().unwrap();
@@ -67,6 +71,9 @@ async fn main() {
                                     match result {
                                         Some(Ok(bytes)) => {
                                             if let Ok(msg) = serde_json::from_slice::<GameMessage>(&bytes) {
+                                                if let GameMessage::RoomCode { code } = &msg {
+                                                    println!("Room Code: {}", code);
+                                                }
                                                 game_tx.send(msg).ok();
                                             }
                                         }

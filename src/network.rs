@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum GameMessage {
-    Join { room: String },
+    Join { room: Option<String> },
+    RoomCode { code: String },
     Welcome { color: PlayerColor },
     Move { from: Pos, to: Pos },
     Upgrade { pos: Pos },
