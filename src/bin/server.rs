@@ -124,7 +124,7 @@ async fn handle_connection(
 
     let message: GameMessage = serde_json::from_slice(&message_bytes)?;
 
-    let (room_name, is_creation) = match message {
+    let (room_name, is_random_creation) = match message {
         GameMessage::Join { room } => {
             if let Some(r) = room {
                 if r.len() > 20 || !r.chars().all(char::is_alphanumeric) {
@@ -148,7 +148,11 @@ async fn handle_connection(
 
     println!(
         "User {} room: {}",
-        if is_creation { "creating" } else { "joining" },
+        if is_random_creation {
+            "creating"
+        } else {
+            "joining/creating"
+        },
         room_name
     );
 
@@ -158,19 +162,24 @@ async fn handle_connection(
     {
         let mut rooms_guard = rooms.lock().await;
 
-        if is_creation {
-            if rooms_guard.len() >= MAX_ROOMS {
+        let should_create = if is_random_creation {
+            if rooms_guard.contains_key(&room_name) {
                 let error = GameMessage::Error {
-                    message: "Server is full".into(),
+                    message: "Room creation collision. Try again.".into(),
                 };
                 let bytes = serde_json::to_vec(&error)?;
                 framed.send(bytes.into()).await?;
                 return Ok(());
             }
+            true
+        } else {
+            !rooms_guard.contains_key(&room_name)
+        };
 
-            if rooms_guard.contains_key(&room_name) {
+        if should_create {
+            if rooms_guard.len() >= MAX_ROOMS {
                 let error = GameMessage::Error {
-                    message: "Room creation collision. Try again.".into(),
+                    message: "Server is full".into(),
                 };
                 let bytes = serde_json::to_vec(&error)?;
                 framed.send(bytes.into()).await?;
@@ -194,10 +203,14 @@ async fn handle_connection(
             framed.send(bytes.into()).await?;
         } else {
             if let Some(room) = rooms_guard.get_mut(&room_name) {
-                if room.black.is_none() {
-                    room.black = Some(tx);
+                if room.white.is_none() {
+                    room.white = Some(tx);
+                    color = PlayerColor::White;
                     room.last_active = Instant::now();
+                } else if room.black.is_none() {
+                    room.black = Some(tx);
                     color = PlayerColor::Black;
+                    room.last_active = Instant::now();
                 } else {
                     let error = GameMessage::Error {
                         message: "Room full".into(),
@@ -207,6 +220,7 @@ async fn handle_connection(
                     return Ok(());
                 }
             } else {
+                // Should not happen as we checked !rooms_guard.contains_key
                 let error = GameMessage::Error {
                     message: "Room not found".into(),
                 };
