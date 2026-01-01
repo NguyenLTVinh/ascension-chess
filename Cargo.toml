@@ -1,0 +1,10 @@
+[package]
+name = "ascension-chess"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+macroquad = "0.4.14"
+resvg = "0.45.1"
+tiny-skia = "0.11.4"
+usvg = "0.45.1"
