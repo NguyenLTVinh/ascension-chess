@@ -25,7 +25,7 @@ pub enum PieceType {
     Elephant,
     Archbishop,
     Cannon,
-    Chancellor,
+    Monarch,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

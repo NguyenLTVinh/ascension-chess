@@ -57,8 +57,8 @@ async fn main() {
                     game.resolve_promotion(PieceType::Archbishop);
                 } else if is_key_pressed(KeyCode::C) {
                     game.resolve_promotion(PieceType::Cannon);
-                } else if is_key_pressed(KeyCode::K) {
-                    game.resolve_promotion(PieceType::Chancellor);
+                } else if is_key_pressed(KeyCode::M) {
+                    game.resolve_promotion(PieceType::Monarch);
                 }
             }
         }

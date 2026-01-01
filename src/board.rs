@@ -319,7 +319,7 @@ impl Board {
                     }
                 }
             }
-            PieceType::Chancellor => {
+            PieceType::Monarch => {
                 self.add_sliding_moves(
                     &mut moves,
                     pos,
@@ -538,7 +538,7 @@ impl Board {
 
                 false
             }
-            PieceType::Chancellor => {
+            PieceType::Monarch => {
                 if (abs_dx == 1 && abs_dy == 2) || (abs_dx == 2 && abs_dy == 1) {
                     return true;
                 }

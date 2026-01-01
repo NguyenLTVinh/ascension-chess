@@ -29,7 +29,7 @@ impl Piece {
             PieceType::Elephant => VAL_ELEPHANT,
             PieceType::Archbishop => VAL_ARCHBISHOP,
             PieceType::Cannon => VAL_CANNON,
-            PieceType::Chancellor => VAL_CHANCELLOR,
+            PieceType::Monarch => VAL_MONARCH,
         }
     }
 
@@ -40,7 +40,7 @@ impl Piece {
             PieceType::Knight => Some(COST_ELEPHANT),
             PieceType::Bishop => Some(COST_ARCHBISHOP),
             PieceType::Rook => Some(COST_CANNON),
-            PieceType::Queen => Some(COST_CHANCELLOR),
+            PieceType::Queen => Some(COST_MONARCH),
             _ => None,
         }
     }
@@ -51,7 +51,7 @@ impl Piece {
             PieceType::Knight => Some(PieceType::Elephant),
             PieceType::Bishop => Some(PieceType::Archbishop),
             PieceType::Rook => Some(PieceType::Cannon),
-            PieceType::Queen => Some(PieceType::Chancellor),
+            PieceType::Queen => Some(PieceType::Monarch),
             _ => None,
         }
     }

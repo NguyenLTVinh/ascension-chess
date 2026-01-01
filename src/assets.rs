@@ -22,7 +22,7 @@ impl Assets {
             (PieceType::Elephant, "E"),
             (PieceType::Archbishop, "A"),
             (PieceType::Cannon, "C"),
-            (PieceType::Chancellor, "Ch"),
+            (PieceType::Monarch, "M"),
         ];
 
         for (pt, suffix) in pieces.iter() {
