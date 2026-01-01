@@ -4,7 +4,7 @@ use crate::game::*;
 use crate::types::*;
 use macroquad::prelude::*;
 
-pub fn draw_game(game: &Game, assets: &Assets) {
+pub fn draw_game(game: &Game, assets: &Assets, flipped: bool) {
     clear_background(LIGHTGRAY);
 
     draw_texture_ex(
@@ -19,31 +19,30 @@ pub fn draw_game(game: &Game, assets: &Assets) {
     );
 
     if let Some((from, to)) = game.last_move {
-        let (fx, fy) = get_screen_coords(from);
+        let (fx, fy) = get_screen_coords(from, flipped);
         draw_rectangle(fx, fy, SQUARE_SIZE, SQUARE_SIZE, LAST_MOVE_COLOR);
-        let (tx, ty) = get_screen_coords(to);
+        let (tx, ty) = get_screen_coords(to, flipped);
         draw_rectangle(tx, ty, SQUARE_SIZE, SQUARE_SIZE, LAST_MOVE_COLOR);
     }
 
     if game.board.is_in_check(game.turn) {
         if let Some(king_pos) = game.board.find_king(game.turn) {
-            let (kx, ky) = get_screen_coords(king_pos);
+            let (kx, ky) = get_screen_coords(king_pos, flipped);
             draw_rectangle(kx, ky, SQUARE_SIZE, SQUARE_SIZE, CHECK_COLOR);
         }
     }
 
     if let Some(pos) = game.selected_pos {
-        let (sx, sy) = get_screen_coords(pos);
+        let (sx, sy) = get_screen_coords(pos, flipped);
         draw_rectangle(sx, sy, SQUARE_SIZE, SQUARE_SIZE, SELECTION_COLOR);
     }
 
     for pos in &game.legal_moves {
-        let (sx, sy) = get_screen_coords(*pos);
+        let (sx, sy) = get_screen_coords(*pos, flipped);
         let center_x = sx + SQUARE_SIZE / 2.0;
         let center_y = sy + SQUARE_SIZE / 2.0;
 
-        if let Some(piece) = game.board.get_piece(*pos) {
-            let margin = 5.0;
+        if let Some(_piece) = game.board.get_piece(*pos) {
             let size = 15.0;
             draw_triangle(
                 vec2(sx, sy),
@@ -79,7 +78,7 @@ pub fn draw_game(game: &Game, assets: &Assets) {
             let pos = Pos::new(x, y);
             if let Some(piece) = game.board.get_piece(pos) {
                 if let Some(tex) = assets.textures.get(&(piece.piece_type, piece.color)) {
-                    let (sx, sy) = get_screen_coords(pos);
+                    let (sx, sy) = get_screen_coords(pos, flipped);
                     draw_texture_ex(
                         tex,
                         sx,
@@ -98,9 +97,12 @@ pub fn draw_game(game: &Game, assets: &Assets) {
     draw_ui(game);
 }
 
-fn get_screen_coords(pos: Pos) -> (f32, f32) {
-    let sx = BOARD_OFFSET_X + pos.x as f32 * SQUARE_SIZE;
-    let sy = BOARD_OFFSET_Y + (7 - pos.y) as f32 * SQUARE_SIZE;
+fn get_screen_coords(pos: Pos, flipped: bool) -> (f32, f32) {
+    let effective_x = if flipped { 7 - pos.x } else { pos.x };
+    let effective_y = if flipped { pos.y } else { 7 - pos.y };
+
+    let sx = BOARD_OFFSET_X + effective_x as f32 * SQUARE_SIZE;
+    let sy = BOARD_OFFSET_Y + effective_y as f32 * SQUARE_SIZE;
     (sx, sy)
 }
 
