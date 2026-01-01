@@ -204,15 +204,33 @@ fn draw_ui(game: &Game, offset_x: f32, offset_y: f32) {
 
     draw_text("Ascend (Click Piece + U Key):", ui_x, ui_y, 20.0, BLACK);
     ui_y += 25.0;
-    draw_text("P -> Hawk Warrior (H): 5 pts", ui_x, ui_y, 20.0, DARKGRAY);
+    draw_text(
+        "P -> Hawk Warrior (H): Costs 5 pts",
+        ui_x,
+        ui_y,
+        20.0,
+        DARKGRAY,
+    );
     ui_y += 20.0;
-    draw_text("N -> War Elephant (E): 7 pts", ui_x, ui_y, 20.0, DARKGRAY);
+    draw_text(
+        "N -> War Elephant (E): Costs 7 pts",
+        ui_x,
+        ui_y,
+        20.0,
+        DARKGRAY,
+    );
     ui_y += 20.0;
-    draw_text("B -> Archbishop (A): 7 pts", ui_x, ui_y, 20.0, DARKGRAY);
+    draw_text(
+        "B -> Archbishop (A): Costs 7 pts",
+        ui_x,
+        ui_y,
+        20.0,
+        DARKGRAY,
+    );
     ui_y += 20.0;
-    draw_text("R -> Cannon (C): 8 pts", ui_x, ui_y, 20.0, DARKGRAY);
+    draw_text("R -> Cannon (C): Costs 8 pts", ui_x, ui_y, 20.0, DARKGRAY);
     ui_y += 20.0;
-    draw_text("Q -> Monarch (M): 12 pts", ui_x, ui_y, 20.0, DARKGRAY);
+    draw_text("Q -> Monarch (M): Costs 12 pts", ui_x, ui_y, 20.0, DARKGRAY);
     ui_y += 40.0;
 
     if let TurnPhase::Promoting(_, is_hawk) = game.phase {
