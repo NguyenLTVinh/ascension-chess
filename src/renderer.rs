@@ -134,12 +134,12 @@ fn draw_rules(assets: &Assets, offset_x: f32, offset_y: f32) {
         (
             PieceType::Elephant,
             format!("War Elephant (Val= {} pts)", VAL_ELEPHANT),
-            "Move: Knight + Diag 2\nCapture: Knight + Diag 2",
+            "Move: Knight + Diag 1 or 2\nCapture: Knight + Diag 1 or 2",
         ),
         (
             PieceType::Archbishop,
             format!("Archbishop (Val= {} pts)", VAL_ARCHBISHOP),
-            "Move: Diag + Fwd/Side 3\nCapture:  Diag + Fwd/Side 3",
+            "Move: Diag + Fwd/Side 1\nCapture:  Diag + Fwd/Side 1",
         ),
         (
             PieceType::Cannon,

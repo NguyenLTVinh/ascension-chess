@@ -84,7 +84,7 @@ impl Board {
             None => return moves,
         };
 
-        let candidates = self.get_pseudo_legal_moves(pos, piece);
+        let candidates = self.get_pseudo_legal_moves(pos, piece, false);
 
         for target in candidates {
             let mut temp_board = self.clone();
@@ -98,7 +98,7 @@ impl Board {
         moves
     }
 
-    fn get_pseudo_legal_moves(&self, pos: Pos, piece: Piece) -> Vec<Pos> {
+    fn get_pseudo_legal_moves(&self, pos: Pos, piece: Piece, attack_mode: bool) -> Vec<Pos> {
         let mut moves = Vec::new();
         let (x, y) = (pos.x, pos.y);
         let forward_dir = if piece.color == PlayerColor::White {
@@ -109,28 +109,37 @@ impl Board {
 
         match piece.piece_type {
             PieceType::Pawn => {
-                let f1 = Pos::new(x, y + forward_dir);
-                if f1.is_valid() && self.is_empty(f1) {
-                    moves.push(f1);
-                    if (piece.color == PlayerColor::White && y == 1)
-                        || (piece.color == PlayerColor::Black && y == 6)
-                    {
-                        let f2 = Pos::new(x, y + forward_dir * 2);
-                        if self.is_empty(f2) {
-                            moves.push(f2);
+                if attack_mode {
+                    for dx in [-1, 1] {
+                        let cap = Pos::new(x + dx, y + forward_dir);
+                        if cap.is_valid() {
+                            moves.push(cap);
                         }
                     }
-                }
-                for dx in [-1, 1] {
-                    let cap = Pos::new(x + dx, y + forward_dir);
-                    if cap.is_valid() {
-                        if let Some(target) = self.get_piece(cap) {
-                            if target.color != piece.color {
-                                moves.push(cap);
+                } else {
+                    let f1 = Pos::new(x, y + forward_dir);
+                    if f1.is_valid() && self.is_empty(f1) {
+                        moves.push(f1);
+                        if (piece.color == PlayerColor::White && y == 1)
+                            || (piece.color == PlayerColor::Black && y == 6)
+                        {
+                            let f2 = Pos::new(x, y + forward_dir * 2);
+                            if self.is_empty(f2) {
+                                moves.push(f2);
                             }
-                        } else if let Some(ep) = self.en_passant_target {
-                            if cap == ep {
-                                moves.push(cap);
+                        }
+                    }
+                    for dx in [-1, 1] {
+                        let cap = Pos::new(x + dx, y + forward_dir);
+                        if cap.is_valid() {
+                            if let Some(target) = self.get_piece(cap) {
+                                if target.color != piece.color {
+                                    moves.push(cap);
+                                }
+                            } else if let Some(ep) = self.en_passant_target {
+                                if cap == ep {
+                                    moves.push(cap);
+                                }
                             }
                         }
                     }
@@ -151,7 +160,7 @@ impl Board {
                     let target = Pos::new(x + dx, y + dy);
                     if target.is_valid() {
                         if let Some(p) = self.get_piece(target) {
-                            if p.color != piece.color {
+                            if attack_mode || p.color != piece.color {
                                 moves.push(target);
                             }
                         } else {
@@ -169,7 +178,7 @@ impl Board {
                         let target = Pos::new(x + dx, y + dy);
                         if target.is_valid() {
                             if let Some(p) = self.get_piece(target) {
-                                if p.color != piece.color {
+                                if attack_mode || p.color != piece.color {
                                     moves.push(target);
                                 }
                             } else {
@@ -178,7 +187,7 @@ impl Board {
                         }
                     }
                 }
-                if !piece.has_moved && !self.is_in_check(piece.color) {
+                if !attack_mode && !piece.has_moved && !self.is_in_check(piece.color) {
                     if self.is_path_clear(pos, Pos::new(7, y)) {
                         if let Some(rook) = self.get_piece(Pos::new(7, y)) {
                             if rook.piece_type == PieceType::Rook && !rook.has_moved {
@@ -208,12 +217,14 @@ impl Board {
                 pos,
                 piece.color,
                 &[(0, 1), (0, -1), (1, 0), (-1, 0)],
+                attack_mode,
             ),
             PieceType::Bishop => self.add_sliding_moves(
                 &mut moves,
                 pos,
                 piece.color,
                 &[(1, 1), (1, -1), (-1, 1), (-1, -1)],
+                attack_mode,
             ),
             PieceType::Queen => {
                 self.add_sliding_moves(
@@ -221,12 +232,14 @@ impl Board {
                     pos,
                     piece.color,
                     &[(0, 1), (0, -1), (1, 0), (-1, 0)],
+                    attack_mode,
                 );
                 self.add_sliding_moves(
                     &mut moves,
                     pos,
                     piece.color,
                     &[(1, 1), (1, -1), (-1, 1), (-1, -1)],
+                    attack_mode,
                 );
             }
             PieceType::Hawk => {
@@ -245,7 +258,7 @@ impl Board {
                     let target = Pos::new(x + dx, y + dy);
                     if target.is_valid() {
                         if let Some(p) = self.get_piece(target) {
-                            if p.color != piece.color {
+                            if attack_mode || p.color != piece.color {
                                 moves.push(target);
                             }
                         }
@@ -267,7 +280,7 @@ impl Board {
                     let target = Pos::new(x + dx, y + dy);
                     if target.is_valid() {
                         if let Some(p) = self.get_piece(target) {
-                            if p.color != piece.color {
+                            if attack_mode || p.color != piece.color {
                                 moves.push(target);
                             }
                         } else {
@@ -275,20 +288,33 @@ impl Board {
                         }
                     }
                 }
-                let diag_offsets = [(2, 2), (2, -2), (-2, 2), (-2, -2)];
-                for (dx, dy) in diag_offsets {
+                let diag_offsets_2 = [(2, 2), (2, -2), (-2, 2), (-2, -2)];
+                for (dx, dy) in diag_offsets_2 {
                     let target = Pos::new(x + dx, y + dy);
                     let mid = Pos::new(x + dx / 2, y + dy / 2);
                     if target.is_valid() {
                         // Check obstruction
                         if self.is_empty(mid) {
                             if let Some(p) = self.get_piece(target) {
-                                if p.color != piece.color {
+                                if attack_mode || p.color != piece.color {
                                     moves.push(target);
                                 }
                             } else {
                                 moves.push(target);
                             }
+                        }
+                    }
+                }
+                let diag_offsets_1 = [(1, 1), (1, -1), (-1, 1), (-1, -1)];
+                for (dx, dy) in diag_offsets_1 {
+                    let target = Pos::new(x + dx, y + dy);
+                    if target.is_valid() {
+                        if let Some(p) = self.get_piece(target) {
+                            if attack_mode || p.color != piece.color {
+                                moves.push(target);
+                            }
+                        } else {
+                            moves.push(target);
                         }
                     }
                 }
@@ -299,14 +325,15 @@ impl Board {
                     pos,
                     piece.color,
                     &[(1, 1), (1, -1), (-1, 1), (-1, -1)],
+                    attack_mode,
                 );
                 let rook_dirs = [(0, 1), (0, -1), (1, 0), (-1, 0)];
                 for (dx, dy) in rook_dirs {
                     let mut curr = Pos::new(x + dx, y + dy);
                     let mut dist = 0;
-                    while curr.is_valid() && dist < 3 {
+                    while curr.is_valid() && dist < 1 {
                         if let Some(p) = self.get_piece(curr) {
-                            if p.color != piece.color {
+                            if attack_mode || p.color != piece.color {
                                 moves.push(curr);
                             }
                             break;
@@ -325,12 +352,14 @@ impl Board {
                     pos,
                     piece.color,
                     &[(0, 1), (0, -1), (1, 0), (-1, 0)],
+                    attack_mode,
                 );
                 self.add_sliding_moves(
                     &mut moves,
                     pos,
                     piece.color,
                     &[(1, 1), (1, -1), (-1, 1), (-1, -1)],
+                    attack_mode,
                 );
                 let knight_offsets = [
                     (1, 2),
@@ -346,7 +375,7 @@ impl Board {
                     let target = Pos::new(x + dx, y + dy);
                     if target.is_valid() {
                         if let Some(p) = self.get_piece(target) {
-                            if p.color != piece.color {
+                            if attack_mode || p.color != piece.color {
                                 moves.push(target);
                             }
                         } else {
@@ -364,7 +393,7 @@ impl Board {
                             moves.push(curr);
                         } else {
                             if let Some(p) = self.get_piece(curr) {
-                                if p.color != piece.color {
+                                if attack_mode || p.color != piece.color {
                                     moves.push(curr);
                                 }
                             }
@@ -372,7 +401,7 @@ impl Board {
                             let mut next = Pos::new(curr.x + dx, curr.y + dy);
                             while next.is_valid() {
                                 if let Some(p) = self.get_piece(next) {
-                                    if p.color != piece.color {
+                                    if attack_mode || p.color != piece.color {
                                         moves.push(next);
                                     }
                                     break;
@@ -397,12 +426,13 @@ impl Board {
         start: Pos,
         color: PlayerColor,
         dirs: &[(i32, i32)],
+        attack_mode: bool,
     ) {
         for (dx, dy) in dirs {
             let mut curr = Pos::new(start.x + dx, start.y + dy);
             while curr.is_valid() {
                 if let Some(p) = self.get_piece(curr) {
-                    if p.color != color {
+                    if attack_mode || p.color != color {
                         moves.push(curr);
                     }
                     break;
@@ -443,7 +473,7 @@ impl Board {
                 let pos = Pos::new(x, y);
                 if let Some(p) = self.get_piece(pos) {
                     if p.color == by_color {
-                        if self.can_piece_attack(pos, target) {
+                        if self.get_pseudo_legal_moves(pos, p, true).contains(&target) {
                             return true;
                         }
                     }
@@ -510,131 +540,5 @@ impl Board {
         }
 
         true
-    }
-
-    pub fn can_piece_attack(&self, attacker_pos: Pos, target_pos: Pos) -> bool {
-        let piece = match self.get_piece(attacker_pos) {
-            Some(p) => p,
-            None => return false,
-        };
-
-        if attacker_pos == target_pos {
-            return false;
-        }
-
-        let dx = target_pos.x - attacker_pos.x;
-        let dy = target_pos.y - attacker_pos.y;
-        let abs_dx = dx.abs();
-        let abs_dy = dy.abs();
-
-        match piece.piece_type {
-            PieceType::Pawn => {
-                let forward_dir = if piece.color == PlayerColor::White {
-                    1
-                } else {
-                    -1
-                };
-                dy == forward_dir && abs_dx == 1
-            }
-            PieceType::Knight => (abs_dx == 1 && abs_dy == 2) || (abs_dx == 2 && abs_dy == 1),
-            PieceType::King => abs_dx <= 1 && abs_dy <= 1,
-            PieceType::Rook => {
-                if dx == 0 || dy == 0 {
-                    self.is_path_clear(attacker_pos, target_pos)
-                } else {
-                    false
-                }
-            }
-            PieceType::Bishop => {
-                if abs_dx == abs_dy {
-                    self.is_path_clear(attacker_pos, target_pos)
-                } else {
-                    false
-                }
-            }
-            PieceType::Queen => {
-                if dx == 0 || dy == 0 || abs_dx == abs_dy {
-                    self.is_path_clear(attacker_pos, target_pos)
-                } else {
-                    false
-                }
-            }
-            PieceType::Hawk => {
-                let forward_dir = if piece.color == PlayerColor::White {
-                    1
-                } else {
-                    -1
-                };
-
-                if dy == 0 && abs_dx == 1 {
-                    return true;
-                }
-
-                if dy == forward_dir && abs_dx <= 1 {
-                    return true;
-                }
-
-                false
-            }
-            PieceType::Elephant => {
-                if (abs_dx == 1 && abs_dy == 2) || (abs_dx == 2 && abs_dy == 1) {
-                    return true;
-                }
-                if abs_dx == 2 && abs_dy == 2 {
-                    let mid = Pos::new(attacker_pos.x + dx / 2, attacker_pos.y + dy / 2);
-                    return self.is_empty(mid);
-                }
-                false
-            }
-            PieceType::Archbishop => {
-                if abs_dx == abs_dy {
-                    return self.is_path_clear(attacker_pos, target_pos);
-                }
-
-                if (dx == 0 || dy == 0) && (abs_dx <= 3 && abs_dy <= 3) {
-                    return self.is_path_clear(attacker_pos, target_pos);
-                }
-
-                false
-            }
-            PieceType::Monarch => {
-                if (abs_dx == 1 && abs_dy == 2) || (abs_dx == 2 && abs_dy == 1) {
-                    return true;
-                }
-                if dx == 0 || dy == 0 || abs_dx == abs_dy {
-                    return self.is_path_clear(attacker_pos, target_pos);
-                }
-                false
-            }
-            PieceType::Cannon => {
-                if dx != 0 && dy != 0 {
-                    return false;
-                }
-
-                let step_x = dx.signum();
-                let step_y = dy.signum();
-                let mut curr = Pos::new(attacker_pos.x + step_x, attacker_pos.y + step_y);
-                let mut obstacles = 0;
-
-                while curr != target_pos {
-                    if !self.is_empty(curr) {
-                        obstacles += 1;
-                    }
-                    if obstacles > 1 {
-                        return false;
-                    }
-                    curr.x += step_x;
-                    curr.y += step_y;
-                }
-
-                if obstacles == 0 {
-                    true
-                } else if obstacles == 1 {
-                    true
-                } else {
-                    false
-                }
-            }
-        }
     }
 }
