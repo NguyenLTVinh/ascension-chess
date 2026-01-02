@@ -7,10 +7,11 @@ use macroquad::prelude::*;
 pub fn draw_game(game: &Game, assets: &Assets, flipped: bool, offset_x: f32, offset_y: f32) {
     clear_background(LIGHTGRAY);
 
+    // Offset here just to make the indicators behave nicely
     draw_texture_ex(
         &assets.board_texture,
-        offset_x,
-        offset_y,
+        offset_x - 0.5,
+        offset_y - 1.1,
         WHITE,
         DrawTextureParams {
             dest_size: Some(vec2(SQUARE_SIZE * 8.0, SQUARE_SIZE * 8.0)),

@@ -70,3 +70,6 @@ Requirements: Rust (cargo).
 ```bash
 cargo build --release
 ```
+
+## Acknowledgment
+The board and chess pieces are taken from [Kadagaden's chess-pieces github repository](https://github.com/Kadagaden/chess-pieces).
